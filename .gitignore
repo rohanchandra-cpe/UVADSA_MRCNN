@@ -1,0 +1,12 @@
+# Directories to ignore
+images/
+json/
+Knot_Tying_Images_Unprocessed/
+Knot_Tying_JSON_Unprocessed/
+logs/
+test/
+train/
+validation/
+Mask_RCNN/
+virtual_environment_test/
+mask_rcnn_coco.h5

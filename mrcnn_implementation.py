@@ -160,7 +160,7 @@ def train(model):
     train_set.prepare()
 
     val_set = RavenDataset()
-    val_set.load_dataset() # path to val data here
+    val_set.load_dataset("./", 'validation') # path to val data here
     val_set.prepare()
 
     # More Step to Come Later!
@@ -196,3 +196,5 @@ if __name__ == "__main__":
 # I need a good GPU
 
 # Report should be in by the lsat day of final exams, one good version ~ May 13th, should be a first draft. We can revise it later 
+
+# IBIS

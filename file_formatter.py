@@ -106,6 +106,6 @@ def copyanything(src, dst):
 def main():
     # rename_files("./Knot_Tying_Images_Unprocessed/Knot_Tying/", "./images/", False)
     # rename_files("./Knot_Tying_JSON_Unprocessed/Knot_Tying_Unzipped/", "./json/", True)
-    train_test_split(0.4, 0.4, 0.2, "./images/")
+    train_test_split(0.4, 0.4, 0.2, "./images/") # 70, 20, 10 recommended
 if __name__ == "__main__":
     main()

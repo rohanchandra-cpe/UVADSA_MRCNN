@@ -1,7 +1,10 @@
+import mrcnn
 from mrcnn.config import Config
 from mrcnn import model as modellib
-from mrcnn import visualize
-import mrcnn
+from mrcnn import visualize as visualize
+from mrcnn.visualize import display_images
+from mrcnn.visualize import display_instances
+
 from mrcnn.utils import Dataset
 from mrcnn import model as modellib, utils
 from mrcnn.model import MaskRCNN
@@ -211,12 +214,11 @@ def visualize():
     ax = get_ax(1)
     r = results[0]
     visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
-                                val_set.class_names, r['scores'], ax=ax,
-                                title="Predictions")
+                            dataset.class_names, r['scores'], ax=ax,
+                            title="Predictions")
     log("gt_class_id", gt_class_id)
     log("gt_bbox", gt_bbox)
     log("gt_mask", gt_mask)
-
 
     # This is for predicting images which are not present in dataset
     image1 = random.choice(test_set.image_ids)

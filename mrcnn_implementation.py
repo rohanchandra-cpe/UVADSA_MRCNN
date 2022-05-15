@@ -27,6 +27,8 @@ from os import listdir
 from xml.etree import ElementTree
 import skimage.draw
 
+import final
+
 ROOT_DIR = "./"
 # Path to trained weights file
 COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
@@ -154,7 +156,98 @@ class RavenDataset(Dataset):
         else:
             super(self.__class__, self).image_reference(image_id)
 
-def train(model):
+class InferenceConfig(config.__class__):
+    # Run detection on one image at a time
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
+
+def get_ax(rows=1, cols=1, size=16):
+    """Return a Matplotlib Axes array to be used in
+    all visualizations in the notebook. Provide a
+    central point to control graph sizes.
+    
+    Adjust the size attribute to control how big to render images
+    """
+    _, ax = plt.subplots(rows, cols, figsize=(size*cols, size*rows))
+    return ax
+
+def visualize():
+    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
+    DEVICE = "/cpu:0"
+    TEST_MODE = "inference"
+
+    config = InferenceConfig()
+    config.display()
+
+    # Load validation dataset
+    dataset = final.RavenDataset()
+    dataset.load_custom(CUSTOM_DIR, "val")
+
+    # Must call before using the dataset
+    dataset.prepare()
+
+    print("Images: {}\nClasses: {}".format(len(dataset.image_ids), dataset.class_names))
+
+    with tf.device(DEVICE):
+    model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
+
+    weights_path = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
+
+    # Load weights
+    print("Loading weights ", weights_path)
+    model.load_weights(weights_path, by_name=True)
+
+    image_id = random.choice(dataset.image_ids)
+    image, image_meta, gt_class_id, gt_bbox, gt_mask =\
+        modellib.load_image_gt(dataset, config, image_id, use_mini_mask=False)
+    info = dataset.image_info[image_id]
+    print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id, 
+                                        dataset.image_reference(image_id)))
+
+    # Run object detection
+    results = model.detect([image], verbose=1)
+
+    # Display results
+    ax = get_ax(1)
+    r = results[0]
+    visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
+                                dataset.class_names, r['scores'], ax=ax,
+                                title="Predictions")
+    log("gt_class_id", gt_class_id)
+    log("gt_bbox", gt_bbox)
+    log("gt_mask", gt_mask)
+
+
+    # This is for predicting images which are not present in dataset
+    #image_id = random.choice(dataset.image_ids)
+    image1 = mpimg.imread('/home/sriram/Downloads/waste_cnn/waste/data/val/trash66.jpg')
+
+        # Run object detection
+    print(len([image1]))
+    results1 = model.detect([image1], verbose=1)
+
+        # Display results
+    ax = get_ax(1)
+    r1 = results1[0]
+    visualize.display_instances(image1, r1['rois'], r1['masks'], r1['class_ids'],
+                                dataset.class_names, r1['scores'], ax=ax,
+                                title="Predictions1")
+
+def train():
+    config = myMaskRCNNConfig()
+    model = modellib.MaskRCNN(mode="training", config=config,
+                                    model_dir=DEFAULT_LOGS_DIR)
+
+    weights_path = COCO_WEIGHTS_PATH
+            # Download weights file
+    if not os.path.exists(weights_path):
+        utils.download_trained_weights(weights_path)
+
+    model.load_weights(weights_path, by_name=True, exclude=[
+                "mrcnn_class_logits", "mrcnn_bbox_fc",
+                "mrcnn_bbox", "mrcnn_mask"])
+    print("Commence Training!")
+
     # Train the model
     train_set = RavenDataset()
     train_set.load_dataset("./", 'train_small') # path to training data here
@@ -170,25 +263,8 @@ def train(model):
                 learning_rate = model.config.LEARNING_RATE,
                 epochs = 2,
                 layers = 'heads')
-                
-def main():
-    config = myMaskRCNNConfig()
-    model = modellib.MaskRCNN(mode="training", config=config,
-                                    model_dir=DEFAULT_LOGS_DIR)
 
-    weights_path = COCO_WEIGHTS_PATH
-            # Download weights file
-    if not os.path.exists(weights_path):
-        utils.download_trained_weights(weights_path)
-
-    model.load_weights(weights_path, by_name=True, exclude=[
-                "mrcnn_class_logits", "mrcnn_bbox_fc",
-                "mrcnn_bbox", "mrcnn_mask"])
-    print("Commence Training!")
-    train(model)
-
-if __name__ == "__main__":
-    main()
+train()
 
 # requirements file, make a github repo with info on how to set it up and run it
 # JIGSAW dataset, got it from Cogito, Ian has information about that 

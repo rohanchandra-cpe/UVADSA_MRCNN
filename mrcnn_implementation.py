@@ -189,20 +189,17 @@ def visualize():
     print("Images: {}\nClasses: {}".format(len(dataset.image_ids), dataset.class_names))
 
     with tf.device(DEVICE):
-    model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
-
-    weights_path = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
+        model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
+        weights_path = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
 
     # Load weights
     print("Loading weights ", weights_path)
     model.load_weights(weights_path, by_name=True)
 
     image_id = random.choice(dataset.image_ids)
-    image, image_meta, gt_class_id, gt_bbox, gt_mask =\
-        modellib.load_image_gt(dataset, config, image_id, use_mini_mask=False)
+    image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(dataset, config, image_id, use_mini_mask=False)
     info = dataset.image_info[image_id]
-    print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id, 
-                                        dataset.image_reference(image_id)))
+    print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id, dataset.image_reference(image_id)))
 
     # Run object detection
     results = model.detect([image], verbose=1)
@@ -265,13 +262,3 @@ def train():
                 layers = 'heads')
 
 train()
-
-# requirements file, make a github repo with info on how to set it up and run it
-# JIGSAW dataset, got it from Cogito, Ian has information about that 
-# Focus on the technical approach 
-# Ask Kay about using machines to train the MRCNN
-# I need a good GPU
-
-# Report should be in by the lsat day of final exams, one good version ~ May 13th, should be a first draft. We can revise it later 
-
-# IBIS

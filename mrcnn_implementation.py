@@ -75,7 +75,7 @@ class RavenDataset(Dataset):
         images_dataset_dir = os.path.join(dataset_dir, subset + "/images/")
 
         for dirpath, dirnames, files in os.walk(images_dataset_dir):
-            for file_name in files: # we hae to self.add image for each file_name
+            for file_name in files: # we have to self.add image for each file_name
                 image_file_name = file_name
                 json_file_name = file_name[0:len(file_name) - len(".png")] + ".json"
                 annotations = json.load(open(os.path.join(dataset_dir, subset + "/json/" + json_file_name)))

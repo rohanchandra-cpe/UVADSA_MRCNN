@@ -71,7 +71,8 @@ class RavenDataset(Dataset):
         self.add_class("dataset", 8, "Bottom Right Thread")
 
         # training, validation, or testing
-        assert subset in ['train', 'test', 'validation']
+        # assert subset in ['train', 'test', 'validation']
+        assert subset in ['train_small', 'test', 'val_small']
         images_dataset_dir = os.path.join(dataset_dir, subset + "/images/")
 
         for dirpath, dirnames, files in os.walk(images_dataset_dir):
@@ -111,7 +112,7 @@ class RavenDataset(Dataset):
                     num_ids.append(name_dict[class_name])
                 
                 self.add_image(
-                    "object",
+                    "dataset",
                     image_id = dirpath + file_name,
                     path = dirpath + file_name,
                     width = annotations["metadata"]["width"], #640
@@ -124,13 +125,13 @@ class RavenDataset(Dataset):
     def load_mask(self, image_id):        
         #convert polygons to a bit mask of shape
         image_info = self.image_info[image_id]
-        if image_info["source"] != "object":
+        if image_info["source"] != "dataset":
             return super(self.__class__, self).load_mask(image_id)
 
         # Convert polygons to a bitmap mask of shape
         # [height, width, instance_count]
         info = self.image_info[image_id]
-        if info["source"] != "object":
+        if info["source"] != "dataset":
             return super(self.__class__, self).load_mask(image_id)
         num_ids = info['num_ids']
         mask = np.zeros([info["height"], info["width"], len(info["polygons"])],dtype=np.uint8)
@@ -148,7 +149,7 @@ class RavenDataset(Dataset):
     def image_reference(self, image_id):
         """Return the path of the image."""
         info = self.image_info[image_id]
-        if info["source"] == "object":
+        if info["source"] == "dataset":
             return info["path"]
         else:
             super(self.__class__, self).image_reference(image_id)
@@ -156,18 +157,18 @@ class RavenDataset(Dataset):
 def train(model):
     # Train the model
     train_set = RavenDataset()
-    train_set.load_dataset("./", 'train') # path to training data here
+    train_set.load_dataset("./", 'train_small') # path to training data here
     train_set.prepare()
 
     val_set = RavenDataset()
-    val_set.load_dataset("./", 'validation') # path to val data here
+    val_set.load_dataset("./", 'val_small') # path to val data here
     val_set.prepare()
 
     # More Step to Come Later!
     print("Training network heads")
     model.train(train_set, val_set,
                 learning_rate = model.config.LEARNING_RATE,
-                epochs = 10,
+                epochs = 2,
                 layers = 'heads')
                 
 def main():

@@ -46,7 +46,7 @@ class myMaskRCNNConfig(Config):
     NUM_CLASSES = 1+8
    
     # Number of training steps per epoch
-    STEPS_PER_EPOCH = 131
+    STEPS_PER_EPOCH = 5
     
     # Learning rate
     LEARNING_RATE=0.006

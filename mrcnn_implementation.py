@@ -19,15 +19,18 @@ import os
 import time
 import json
 
-from matplotlib import pyplot
-from matplotlib.patches import Rectangle
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.image as mpimg
+import tensorflow as tf
+import sys
+import math
+import re
 from keras.models import load_model
-# %matplotlib inline
 from os import listdir
 from xml.etree import ElementTree
 import skimage.draw
-
-import final
 
 ROOT_DIR = "./"
 # Path to trained weights file
@@ -74,7 +77,7 @@ class RavenDataset(Dataset):
 
         # training, validation, or testing
         # assert subset in ['train', 'test', 'validation']
-        assert subset in ['train_small', 'test', 'val_small']
+        assert subset in ['train_small', 'test_small', 'val_small']
         images_dataset_dir = os.path.join(dataset_dir, subset + "/images/")
 
         for dirpath, dirnames, files in os.walk(images_dataset_dir):
@@ -156,7 +159,7 @@ class RavenDataset(Dataset):
         else:
             super(self.__class__, self).image_reference(image_id)
 
-class InferenceConfig(config.__class__):
+class InferenceConfig(Config):
     # Run detection on one image at a time
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
@@ -173,33 +176,33 @@ def get_ax(rows=1, cols=1, size=16):
 
 def visualize():
     SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
-    DEVICE = "/cpu:0"
-    TEST_MODE = "inference"
 
-    config = InferenceConfig()
+    config = myMaskRCNNConfig()
     config.display()
 
     # Load validation dataset
-    dataset = final.RavenDataset()
-    dataset.load_custom(CUSTOM_DIR, "val")
+    val_set = RavenDataset()
+    val_set.load_dataset("./", 'val_small') # path to val data here
+    val_set.prepare()
 
-    # Must call before using the dataset
-    dataset.prepare()
+    # Load test dataset
+    test_set = RavenDataset()
+    test_set.load_dataset("./", 'test_small') # path to test data here
+    test_set.prepare()
 
-    print("Images: {}\nClasses: {}".format(len(dataset.image_ids), dataset.class_names))
+    # print("Images: {}\nClasses: {}".format(len(dataset.image_ids), dataset.class_names))
 
-    with tf.device(DEVICE):
-        model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
-        weights_path = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
+    model = modellib.MaskRCNN(mode="inference", config=config, model_dir="DEFAULT_LOGS_DIR")
+    weights_path = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
 
     # Load weights
     print("Loading weights ", weights_path)
     model.load_weights(weights_path, by_name=True)
 
-    image_id = random.choice(dataset.image_ids)
-    image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(dataset, config, image_id, use_mini_mask=False)
-    info = dataset.image_info[image_id]
-    print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id, dataset.image_reference(image_id)))
+    image_id = random.choice(val_set.image_ids)
+    image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(val_set, config, image_id, use_mini_mask=False)
+    info = val_set.image_info[image_id]
+    # print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id, dataset.image_reference(image_id)))
 
     # Run object detection
     results = model.detect([image], verbose=1)
@@ -208,7 +211,7 @@ def visualize():
     ax = get_ax(1)
     r = results[0]
     visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
-                                dataset.class_names, r['scores'], ax=ax,
+                                val_set.class_names, r['scores'], ax=ax,
                                 title="Predictions")
     log("gt_class_id", gt_class_id)
     log("gt_bbox", gt_bbox)
@@ -216,8 +219,7 @@ def visualize():
 
 
     # This is for predicting images which are not present in dataset
-    #image_id = random.choice(dataset.image_ids)
-    image1 = mpimg.imread('/home/sriram/Downloads/waste_cnn/waste/data/val/trash66.jpg')
+    image1 = random.choice(test_set.image_ids)
 
         # Run object detection
     print(len([image1]))
@@ -254,11 +256,11 @@ def train():
     val_set.load_dataset("./", 'val_small') # path to val data here
     val_set.prepare()
 
-    # More Step to Come Later!
     print("Training network heads")
     model.train(train_set, val_set,
                 learning_rate = model.config.LEARNING_RATE,
                 epochs = 2,
                 layers = 'heads')
 
-train()
+# train()
+visualize()

@@ -7,7 +7,7 @@ from mrcnn.visualize import display_instances
 
 from mrcnn.utils import Dataset
 from mrcnn import model as modellib, utils
-from mrcnn.model import MaskRCNN
+from mrcnn.model import MaskRCNN, log
 
 import numpy as np
 from numpy import zeros
@@ -177,8 +177,8 @@ def get_ax(rows=1, cols=1, size=16):
     _, ax = plt.subplots(rows, cols, figsize=(size*cols, size*rows))
     return ax
 
-def visualize():
-    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
+def visualize_images():
+    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220515T2155/mask_rcnn_maskrcnn_config_0002.h5"
 
     config = myMaskRCNNConfig()
     config.display()
@@ -192,47 +192,49 @@ def visualize():
     test_set = RavenDataset()
     test_set.load_dataset("./", 'test_small') # path to test data here
     test_set.prepare()
-
-    # print("Images: {}\nClasses: {}".format(len(dataset.image_ids), dataset.class_names))
-
-    model = modellib.MaskRCNN(mode="inference", config=config, model_dir="DEFAULT_LOGS_DIR")
-    weights_path = "./logs/maskrcnn_config20220515T1228/mask_rcnn_maskrcnn_config_0002.h5"
+    print("----------------------------------------------------------------------------------")
+    print("Images: {}\nClasses: {}".format(len(val_set.image_ids), val_set.class_names))
+    print("----------------------------------------------------------------------------------")
+    model = modellib.MaskRCNN(mode="inference", config=config, model_dir=DEFAULT_LOGS_DIR)
 
     # Load weights
-    print("Loading weights ", weights_path)
-    model.load_weights(weights_path, by_name=True)
+    print("Loading weights ", SURGERY_WEIGHTS_PATH)
+    model.load_weights(SURGERY_WEIGHTS_PATH, by_name=True)
 
     image_id = random.choice(val_set.image_ids)
     image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(val_set, config, image_id, use_mini_mask=False)
     info = val_set.image_info[image_id]
-    # print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id, dataset.image_reference(image_id)))
 
     # Run object detection
     results = model.detect([image], verbose=1)
+    print("RESULTS")
+    print(results)
+    print("RESULTS END")
 
     # Display results
     ax = get_ax(1)
     r = results[0]
+    print(r)
     visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
-                            dataset.class_names, r['scores'], ax=ax,
+                            val_set.class_names, r['scores'], ax=ax,
                             title="Predictions")
     log("gt_class_id", gt_class_id)
     log("gt_bbox", gt_bbox)
     log("gt_mask", gt_mask)
 
     # This is for predicting images which are not present in dataset
-    image1 = random.choice(test_set.image_ids)
+    # image1 = random.choice(test_set.image_ids)
 
-        # Run object detection
-    print(len([image1]))
-    results1 = model.detect([image1], verbose=1)
+    #     # Run object detection
+    # print(len([image1]))
+    # results1 = model.detect([image1], verbose=1)
 
-        # Display results
-    ax = get_ax(1)
-    r1 = results1[0]
-    visualize.display_instances(image1, r1['rois'], r1['masks'], r1['class_ids'],
-                                dataset.class_names, r1['scores'], ax=ax,
-                                title="Predictions1")
+    #     # Display results
+    # ax = get_ax(1)
+    # r1 = results1[0]
+    # visualize.display_instances(image1, r1['rois'], r1['masks'], r1['class_ids'],
+    #                             test_set.class_names, r1['scores'], ax=ax,
+    #                             title="Predictions1")
 
 def train():
     config = myMaskRCNNConfig()
@@ -265,4 +267,4 @@ def train():
                 layers = 'heads')
 
 # train()
-visualize()
+visualize_images()

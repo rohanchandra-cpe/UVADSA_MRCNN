@@ -1,5 +1,5 @@
 # UVADSA_MRCNN
-UVA DSA MRCNN Implementation for the JIGSAW dataset
+UVA DSA MRCNN Implementation for the RAVEN dataset
 
 Using file-formatter.py
 * Call rename_files and pass in the following arguments
@@ -21,6 +21,10 @@ Using file-formatter.py
   * ./validation/json
 * Which will be used by the MRCNN for training
 
-Now you can begin training with the MRCNN in mrcnn_implementation.py
-
-Test Message
+Using mrcnn-implementation.py
+* First call train() (make sure train() is uncommented and visualize_images is commented)
+* Comment train() out and uncomment visualize_images()
+* Check the logs folder and you should see a folder containing the most recent weights 
+   * Change SURGERY_WEIGHTS_PATH in visualize_images to contain the path to "mask_rcnn_maskrcnn_config_0002.h5"
+   * e.g.  "./logs/maskrcnn_config20220516T2057/mask_rcnn_maskrcnn_config_0002.h5"
+* Call visualize_images() and you should have 2 figures, the first one contains the MRCNN's predictions on an image from the validation set 

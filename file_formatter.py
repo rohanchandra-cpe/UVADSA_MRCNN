@@ -31,11 +31,6 @@ def rename_files(src, destination, json):
                     os.rename(dirpath.replace('\\', '/') + "/" + file_name, destination + str(new_name))
 
 def train_test_split(train, test, validation, src):
-    """
-    A wrapper function for test_train_split()
-
-    Figure out how to make and clear the folders every time this runs so that the values are properly updated
-    """
     claimed_dict = {}
     file_size = len([file for file in os.listdir(src) if os.path.isfile(os.path.join(src, file))])
     train_size = (int)(train * file_size)

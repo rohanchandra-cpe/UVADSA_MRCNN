@@ -166,6 +166,7 @@ class InferenceConfig(Config):
     # Run detection on one image at a time
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
+    DETECTION_MIN_CONFIDENCE= 0.7
 
 def get_ax(rows=1, cols=1, size=16):
     """Return a Matplotlib Axes array to be used in
@@ -178,7 +179,7 @@ def get_ax(rows=1, cols=1, size=16):
     return ax
 
 def visualize_images():
-    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220515T2155/mask_rcnn_maskrcnn_config_0002.h5"
+    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220516T1324/mask_rcnn_maskrcnn_config_0002.h5"
 
     config = myMaskRCNNConfig()
     config.display()
@@ -225,7 +226,7 @@ def visualize_images():
     # This is for predicting images which are not present in dataset
     # image1 = random.choice(test_set.image_ids)
 
-    #     # Run object detection
+    # # Run object detection
     # print(len([image1]))
     # results1 = model.detect([image1], verbose=1)
 

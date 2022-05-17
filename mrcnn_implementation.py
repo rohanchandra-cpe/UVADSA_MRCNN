@@ -192,9 +192,7 @@ def visualize_images():
     val_set.load_dataset("./", 'val_small') # path to val data here
     val_set.prepare()
 
-    print("----------------------------------------------------------------------------------")
     print("Images: {}\nClasses: {}".format(len(val_set.image_ids), val_set.class_names))
-    print("----------------------------------------------------------------------------------")
 
     # Load test dataset
     # test_set = RavenDataset()
@@ -209,7 +207,6 @@ def visualize_images():
     model.load_weights(SURGERY_WEIGHTS_PATH, by_name=True)
 
     image_id = random.choice(val_set.image_ids)
-    print(image_id)
     image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(val_set, config, image_id, use_mini_mask=False)
     info = val_set.image_info[image_id]
     print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id,val_set.image_reference(image_id)))

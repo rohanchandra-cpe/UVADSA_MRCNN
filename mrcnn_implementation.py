@@ -48,10 +48,6 @@ class myMaskRCNNConfig(Config):
     # set the number of GPUs to use along with the number of images
     # per GPU
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
- 
-    # number of classes (we would normally add +1 for the background)
-    NUM_CLASSES = 1 + 8
    
     # Number of training steps per epoch
     STEPS_PER_EPOCH = 5
@@ -73,7 +69,7 @@ class InferenceConfig(Config):
     DETECTION_MIN_CONFIDENCE= 0.7
     NUM_CLASSES = 1 + 8
 
-class RavenDataset(Dataset):
+class JigsawDataset(Dataset):
     def load_dataset(self, dataset_dir, subset):
         # 8 classes for the knot_tying dataset
         # Hardcoded for now, but will change later
@@ -188,7 +184,7 @@ def visualize_images():
     config.display()
 
     # Load validation dataset
-    val_set = RavenDataset()
+    val_set = JigsawDataset()
     val_set.load_dataset("./", 'val_small') # path to val data here
     val_set.prepare()
 
@@ -255,11 +251,11 @@ def train():
     print("Commence Training!")
 
     # Train the model
-    train_set = RavenDataset()
+    train_set = JigsawDataset()
     train_set.load_dataset("./", 'train_small') # path to training data here
     train_set.prepare()
 
-    val_set = RavenDataset()
+    val_set = JigsawDataset()
     val_set.load_dataset("./", 'val_small') # path to val data here
     val_set.prepare()
 

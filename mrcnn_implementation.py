@@ -209,6 +209,7 @@ def visualize_images():
     model.load_weights(SURGERY_WEIGHTS_PATH, by_name=True)
 
     image_id = random.choice(val_set.image_ids)
+    print(image_id)
     image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(val_set, config, image_id, use_mini_mask=False)
     info = val_set.image_info[image_id]
     print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id,val_set.image_reference(image_id)))
@@ -222,6 +223,7 @@ def visualize_images():
     visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
                             val_set.class_names, r['scores'], ax=ax,
                             title="Predictions")
+    visualize.display_images(image)
     log("gt_class_id", gt_class_id)
     log("gt_bbox", gt_bbox)
     log("gt_mask", gt_mask)

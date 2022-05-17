@@ -1,7 +1,7 @@
 # UVADSA_MRCNN
 UVA DSA MRCNN Implementation for the RAVEN dataset
 
-Please run this code in a virtual environment. The requirements.txt file should contain all of the packages you will need to run this properly. 
+The requirements.txt file should contain all of the packages you will need to run this properly. 
 
 Using file-formatter.py
 * Call rename_files and pass in the following arguments

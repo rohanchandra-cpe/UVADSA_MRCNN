@@ -51,7 +51,7 @@ class myMaskRCNNConfig(Config):
     IMAGES_PER_GPU = 1
  
     # number of classes (we would normally add +1 for the background)
-    NUM_CLASSES = 1+8
+    NUM_CLASSES = 1 + 8
    
     # Number of training steps per epoch
     STEPS_PER_EPOCH = 5
@@ -64,6 +64,14 @@ class myMaskRCNNConfig(Config):
     
     # setting Max ground truth instances
     MAX_GT_INSTANCES=10
+
+class InferenceConfig(Config):
+    # Run detection on one image at a time
+    NAME = "INFERENCE_config"
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
+    DETECTION_MIN_CONFIDENCE= 0.7
+    NUM_CLASSES = 1 + 8
 
 class RavenDataset(Dataset):
     def load_dataset(self, dataset_dir, subset):
@@ -162,12 +170,6 @@ class RavenDataset(Dataset):
         else:
             super(self.__class__, self).image_reference(image_id)
 
-class InferenceConfig(Config):
-    # Run detection on one image at a time
-    GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
-    DETECTION_MIN_CONFIDENCE= 0.7
-
 def get_ax(rows=1, cols=1, size=16):
     """Return a Matplotlib Axes array to be used in
     all visualizations in the notebook. Provide a
@@ -179,9 +181,10 @@ def get_ax(rows=1, cols=1, size=16):
     return ax
 
 def visualize_images():
-    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220516T1324/mask_rcnn_maskrcnn_config_0002.h5"
+    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220516T2057/mask_rcnn_maskrcnn_config_0002.h5"
+    DEVICE = "/cpu:0"
 
-    config = myMaskRCNNConfig()
+    config = InferenceConfig()
     config.display()
 
     # Load validation dataset
@@ -189,14 +192,17 @@ def visualize_images():
     val_set.load_dataset("./", 'val_small') # path to val data here
     val_set.prepare()
 
-    # Load test dataset
-    test_set = RavenDataset()
-    test_set.load_dataset("./", 'test_small') # path to test data here
-    test_set.prepare()
     print("----------------------------------------------------------------------------------")
     print("Images: {}\nClasses: {}".format(len(val_set.image_ids), val_set.class_names))
     print("----------------------------------------------------------------------------------")
-    model = modellib.MaskRCNN(mode="inference", config=config, model_dir=DEFAULT_LOGS_DIR)
+
+    # Load test dataset
+    # test_set = RavenDataset()
+    # test_set.load_dataset("./", 'test_small') # path to test data here
+    # test_set.prepare()
+
+    with(tf.device(DEVICE)):
+        model = modellib.MaskRCNN(mode="inference", config=config, model_dir=DEFAULT_LOGS_DIR)
 
     # Load weights
     print("Loading weights ", SURGERY_WEIGHTS_PATH)
@@ -205,17 +211,14 @@ def visualize_images():
     image_id = random.choice(val_set.image_ids)
     image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(val_set, config, image_id, use_mini_mask=False)
     info = val_set.image_info[image_id]
+    print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id,val_set.image_reference(image_id)))
 
     # Run object detection
     results = model.detect([image], verbose=1)
-    print("RESULTS")
-    print(results)
-    print("RESULTS END")
 
     # Display results
     ax = get_ax(1)
     r = results[0]
-    print(r)
     visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], 
                             val_set.class_names, r['scores'], ax=ax,
                             title="Predictions")

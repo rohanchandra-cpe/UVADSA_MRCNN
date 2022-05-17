@@ -1,0 +1,17 @@
+numpy
+colorsys
+argparse
+imutils
+random
+os
+time
+json
+matplotlib
+tensorflow==1.15
+sys
+math
+re
+keras==2.2.4
+skimage
+scikit-image==0.16.2
+h5py==2.9.0

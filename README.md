@@ -23,6 +23,7 @@ Using file-formatter.py
 
 Using mrcnn-implementation.py
 * First call train() (make sure train() is uncommented and visualize_images is commented)
+   * You can adjust the number of epochs the training runs for on line 269, the number of steps per epoch on line 57, and the learning rate on line 60. The majority of the hyperparameters for training are contained in the myMaskRCNNConfig class on line 44. 
 * Comment train() out and uncomment visualize_images()
 * Check the logs folder and you should see a folder containing the most recent weights 
    * Change SURGERY_WEIGHTS_PATH in visualize_images to contain the path to "mask_rcnn_maskrcnn_config_0002.h5"

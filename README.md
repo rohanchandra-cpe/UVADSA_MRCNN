@@ -32,7 +32,12 @@ This repository includes
 * Which will be used by the MRCNN for training
 
 # Using mrcnn-implementation.py
-* Install dependences
+*  Clone the [Mask-RCNN repository](https://github.com/matterport/Mask_RCNN)
+   * Run setup.py
+   ```bash
+   py setup.py install
+   ```
+*  Install dependencies
 ```bash
 pip install -r requirements.txt
 ```

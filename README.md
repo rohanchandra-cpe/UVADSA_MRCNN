@@ -1,9 +1,17 @@
 # UVADSA_MRCNN
-UVA DSA MRCNN Implementation for the RAVEN dataset
+This is a project of the UVA Dependable Systems and Analytics Lab, aimed at training a [Mask-RCNN](https://arxiv.org/abs/1703.06870) model to perform object detection and image segmentation on images from the popular [JIGSAWS](https://cirl.lcsr.jhu.edu/research/hmm/datasets/jigsaws_release/) dataset. 
 
-The requirements.txt file should contain all of the packages you will need to run this properly. 
+This repository includes
+* A requirements.txt file containing all the packages needed to run this code
+* mrcnn_implementation.py, which contains the Mask RCNN model
+* file_formatter.py, used to transform raw Cogito data into data usable by Mask RCNN
+* train_small, test_small, val_small, which each contain 10 images and can be used to determine if the Mask RCNN if functioning properly
+* train, test, and validation, which contain 40%, 40%, and 20% of the full dataset respectively
+   * These percentages can be changed by running file_formatter.py
+* Knot_Tying_Images_Unprocessed and Knot_Tying_JSON_Unprocessed, containing the raw data from Cogito
+* images/ and json/ which contain the unsorted, renamed data from Knot_Tying_Images_Unprocessed and Knot_Tying_JSON_Unprocessed
 
-Using file-formatter.py
+# Using file-formatter.py
 * Call rename_files and pass in the following arguments
    * The location of the folder containing your images or JSON files to be renamed
    * The destination of the renamed files
@@ -23,11 +31,24 @@ Using file-formatter.py
   * ./validation/json
 * Which will be used by the MRCNN for training
 
-Using mrcnn-implementation.py
-* First call train() (make sure train() is uncommented and visualize_images is commented)
-   * You can adjust the number of epochs the training runs for on line 269, the number of steps per epoch on line 57, and the learning rate on line 60. The majority of the hyperparameters for training are contained in the myMaskRCNNConfig class on line 44. 
-* Comment train() out and uncomment visualize_images()
-* Check the logs folder and you should see a folder containing the most recent weights 
-   * Change SURGERY_WEIGHTS_PATH in visualize_images to contain the path to "mask_rcnn_maskrcnn_config_0002.h5"
-   * e.g.  "./logs/maskrcnn_config20220516T2057/mask_rcnn_maskrcnn_config_0002.h5"
-* Call visualize_images() and you should have 2 figures, the first one contains the MRCNN's predictions on an image from the validation set 
+# Using mrcnn-implementation.py
+* Install dependences
+```bash
+pip install -r requirements.txt
+```
+* Train the model starting with the COCO weights
+```bash
+python mrcnn_implementation.py train --train_dataset=./train_small --val_dataset=./val_small --weights=coco  
+```
+* Train the model starting with custom weights
+```bash
+python mrcnn_implementation.py train --train_dataset=./train_small --val_dataset=./val_small --weights=./path/to/weights.h5 
+```
+* Generate visualizations on a random image
+```bash
+python mrcnn_implementation.py visualize --val_dataset=./val_small --weights=coco --image=random 
+```
+* Generate visualizations with a custom image
+```bash
+python mrcnn_implementation.py visualize --val_dataset=./val_small --weights=coco --image=./path/to/image.png
+```

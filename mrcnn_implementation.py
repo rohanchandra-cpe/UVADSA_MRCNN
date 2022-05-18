@@ -35,11 +35,8 @@ from os import listdir
 from xml.etree import ElementTree
 import skimage.draw
 
-ROOT_DIR = "./"
-# Path to trained weights file
-COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 # Directory to save logs and model checkpoints
-DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
+DEFAULT_LOGS_DIR = os.path.join("./", "logs")
 
 class myMaskRCNNConfig(Config):
     # give the configuration a recognizable name
@@ -61,16 +58,19 @@ class myMaskRCNNConfig(Config):
     # setting Max ground truth instances
     MAX_GT_INSTANCES=10
 
-class InferenceConfig(Config):
-    # Run detection on one image at a time
-    NAME = "INFERENCE_config"
-    GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
-    DETECTION_MIN_CONFIDENCE= 0.7
+    # Number of classes
     NUM_CLASSES = 1 + 8
 
+# class InferenceConfig(Config):
+#     # Run detection on one image at a time
+#     NAME = "INFERENCE_config"
+#     GPU_COUNT = 1
+#     IMAGES_PER_GPU = 1
+#     DETECTION_MIN_CONFIDENCE= 0.7
+#     NUM_CLASSES = 1 + 8
+
 class JigsawDataset(Dataset):
-    def load_dataset(self, dataset_dir, subset):
+    def load_dataset(self, dataset_dir):
         # 8 classes for the knot_tying dataset
         # Hardcoded for now, but will change later
         self.add_class("dataset", 1, "Needle Tip") # Do I have more than 1 class?
@@ -82,16 +82,13 @@ class JigsawDataset(Dataset):
         self.add_class("dataset", 7, "Bottom Left Thread")
         self.add_class("dataset", 8, "Bottom Right Thread")
 
-        # training, validation, or testing
-        # assert subset in ['train', 'test', 'validation']
-        assert subset in ['train_small', 'test_small', 'val_small']
-        images_dataset_dir = os.path.join(dataset_dir, subset + "/images/")
+        images_dataset_dir = dataset_dir + "/images/"
 
         for dirpath, dirnames, files in os.walk(images_dataset_dir):
             for file_name in files: # we have to self.add image for each file_name
                 image_file_name = file_name
                 json_file_name = file_name[0:len(file_name) - len(".png")] + ".json"
-                annotations = json.load(open(os.path.join(dataset_dir, subset + "/json/" + json_file_name)))
+                annotations = json.load(open(dataset_dir + "/json/" + json_file_name))
 
                 polygons = []
                 num_ids = []
@@ -190,11 +187,6 @@ def visualize_images():
 
     print("Images: {}\nClasses: {}".format(len(val_set.image_ids), val_set.class_names))
 
-    # Load test dataset
-    # test_set = RavenDataset()
-    # test_set.load_dataset("./", 'test_small') # path to test data here
-    # test_set.prepare()
-
     with(tf.device(DEVICE)):
         model = modellib.MaskRCNN(mode="inference", config=config, model_dir=DEFAULT_LOGS_DIR)
 
@@ -221,46 +213,99 @@ def visualize_images():
     log("gt_bbox", gt_bbox)
     log("gt_mask", gt_mask)
 
-    # This is for predicting images which are not present in dataset
-    # image1 = random.choice(test_set.image_ids)
-
-    # # Run object detection
-    # print(len([image1]))
-    # results1 = model.detect([image1], verbose=1)
-
-    #     # Display results
-    # ax = get_ax(1)
-    # r1 = results1[0]
-    # visualize.display_instances(image1, r1['rois'], r1['masks'], r1['class_ids'],
-    #                             test_set.class_names, r1['scores'], ax=ax,
-    #                             title="Predictions1")
-
-def train():
-    config = myMaskRCNNConfig()
-    model = modellib.MaskRCNN(mode="training", config=config,
-                                    model_dir=DEFAULT_LOGS_DIR)
-
-    weights_path = COCO_WEIGHTS_PATH
-            # Download weights file
-    if not os.path.exists(weights_path):
-        utils.download_trained_weights(weights_path)
-
-    model.load_weights(weights_path, by_name=True, exclude=[
-                "mrcnn_class_logits", "mrcnn_bbox_fc",
-                "mrcnn_bbox", "mrcnn_mask"])
-    print("Commence Training!")
-
-    # Train the model
+def train(model):
+    print("############################")
+    print(args.train_dataset)
+    print(args.val_dataset)
+    print("############################")
     train_set = JigsawDataset()
-    train_set.load_dataset("./", 'train_small') # path to training data here
+    train_set.load_dataset(args.train_dataset) # path to training data here
     train_set.prepare()
 
     val_set = JigsawDataset()
-    val_set.load_dataset("./", 'val_small') # path to val data here
+    val_set.load_dataset(args.val_dataset) # path to val data here
     val_set.prepare()
 
     print("Training network heads")
     model.train(train_set, val_set,
-                learning_rate = model.config.LEARNING_RATE,
-                epochs = 2,
-                layers = 'heads')
+                learning_rate = model.config.LEARNING_RATE, epochs = 2, layers = 'heads')
+
+#############################
+#   Main Method
+#############################
+if __name__ == '__main__':
+    ROOT_DIR = "./"
+    COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Train Mask R-CNN to detect images from the JIGSAW Dataset.')
+    parser.add_argument("command",
+                        help="'train' or 'visualize_images'")
+    parser.add_argument('--train_dataset', required = True,
+                        help='Directory of the training dataset')
+    parser.add_argument('--val_dataset', required = True,
+                        help='Directory of the validation dataset')
+    parser.add_argument('--weights', required=True,
+                        help="Path to weights .h5 file or 'coco'")
+    args = parser.parse_args()
+
+    # Validate arguments
+    if args.command == "train":
+        assert args.train_dataset, "Argument --train_dataset is required for training"
+        assert args.val_dataset, "Argument --val_dataset is required for training"
+
+    print("Weights: ", args.weights)
+    print("Training Dataset: ", args.train_dataset)
+    print("Validation Dataset: ", args.val_dataset)
+
+    # Configurations
+    if args.command == "train":
+        config = myMaskRCNNConfig()
+    else:
+        class InferenceConfig(SurgeryConfig):
+            # Set batch size to 1 since we'll be running inference on
+            # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
+            NAME = "INFERENCE_config"
+            GPU_COUNT = 1
+            IMAGES_PER_GPU = 1
+            DETECTION_MIN_CONFIDENCE= 0.7
+            NUM_CLASSES = 1 + 8
+        config = InferenceConfig()
+    config.display()
+
+    # Create model
+    if args.command == "train":
+        model = modellib.MaskRCNN(mode="training", config=config,
+                                  model_dir=DEFAULT_LOGS_DIR)
+    else:
+        model = modellib.MaskRCNN(mode="inference", config=config,
+                                  model_dir=DEFAULT_LOGS_DIR)
+
+    # Select weights file to load
+    if args.weights.lower() == "coco":
+        weights_path = COCO_WEIGHTS_PATH
+        # Download weights file
+        if not os.path.exists(weights_path):
+            print("------------------------------------------------------------------")
+            utils.download_trained_weights(weights_path)
+    else:
+        weights_path = args.weights
+
+    # Load weights
+    print("Loading weights ", weights_path)
+    if args.weights.lower() == "coco":
+        # Exclude the last layers because they require a matching
+        # number of classes
+        model.load_weights(weights_path, by_name=True, exclude=[
+            "mrcnn_class_logits", "mrcnn_bbox_fc",
+            "mrcnn_bbox", "mrcnn_mask"])
+    else:
+        model.load_weights(weights_path, by_name=True)
+
+    # Train or evaluate
+    if args.command == "train":
+        train(model)
+    else:
+        print("'{}' is not recognized. "
+              "Use 'train' or 'splash'".format(args.command))

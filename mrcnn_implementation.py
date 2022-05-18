@@ -173,28 +173,31 @@ def get_ax(rows=1, cols=1, size=16):
     _, ax = plt.subplots(rows, cols, figsize=(size*cols, size*rows))
     return ax
 
-def visualize_images():
-    SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220516T2057/mask_rcnn_maskrcnn_config_0002.h5"
-    DEVICE = "/cpu:0"
+def visualize_images(model):
+    # SURGERY_WEIGHTS_PATH = "./logs/maskrcnn_config20220516T2057/mask_rcnn_maskrcnn_config_0002.h5"
+    # DEVICE = "/cpu:0"
 
-    config = InferenceConfig()
-    config.display()
+    # config = InferenceConfig()
+    # config.display()
 
     # Load validation dataset
     val_set = JigsawDataset()
-    val_set.load_dataset("./", 'val_small') # path to val data here
+    val_set.load_dataset(args.val_dataset) # path to val data here
     val_set.prepare()
 
     print("Images: {}\nClasses: {}".format(len(val_set.image_ids), val_set.class_names))
 
-    with(tf.device(DEVICE)):
-        model = modellib.MaskRCNN(mode="inference", config=config, model_dir=DEFAULT_LOGS_DIR)
+    # with(tf.device(DEVICE)):
+    #     model = modellib.MaskRCNN(mode="inference", config=config, model_dir=DEFAULT_LOGS_DIR)
 
     # Load weights
-    print("Loading weights ", SURGERY_WEIGHTS_PATH)
-    model.load_weights(SURGERY_WEIGHTS_PATH, by_name=True)
+    # print("Loading weights ", SURGERY_WEIGHTS_PATH)
+    # model.load_weights(SURGERY_WEIGHTS_PATH, by_name=True)
 
-    image_id = random.choice(val_set.image_ids)
+    if(args.image.lower() == "random"):
+        image_id = random.choice(val_set.image_ids)
+    else:
+        image_id = args.image
     image, image_meta, gt_class_id, gt_bbox, gt_mask = modellib.load_image_gt(val_set, config, image_id, use_mini_mask=False)
     info = val_set.image_info[image_id]
     print("image ID: {}.{} ({}) {}".format(info["source"], info["id"], image_id,val_set.image_reference(image_id)))
@@ -214,10 +217,6 @@ def visualize_images():
     log("gt_mask", gt_mask)
 
 def train(model):
-    print("############################")
-    print(args.train_dataset)
-    print(args.val_dataset)
-    print("############################")
     train_set = JigsawDataset()
     train_set.load_dataset(args.train_dataset) # path to training data here
     train_set.prepare()
@@ -241,13 +240,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Train Mask R-CNN to detect images from the JIGSAW Dataset.')
     parser.add_argument("command",
-                        help="'train' or 'visualize_images'")
-    parser.add_argument('--train_dataset', required = True,
+                        help="'train' or 'visualize'")
+    parser.add_argument('--train_dataset', required = False,
                         help='Directory of the training dataset')
-    parser.add_argument('--val_dataset', required = True,
+    parser.add_argument('--val_dataset', required = False,
                         help='Directory of the validation dataset')
-    parser.add_argument('--weights', required=True,
+    parser.add_argument('--weights', required=False,
                         help="Path to weights .h5 file or 'coco'")
+    parser.add_argument('--image', required=False,
+                        metavar="path or URL to image",
+                        help='Image to apply the color splash effect on')
     args = parser.parse_args()
 
     # Validate arguments
@@ -255,15 +257,24 @@ if __name__ == '__main__':
         assert args.train_dataset, "Argument --train_dataset is required for training"
         assert args.val_dataset, "Argument --val_dataset is required for training"
 
-    print("Weights: ", args.weights)
-    print("Training Dataset: ", args.train_dataset)
-    print("Validation Dataset: ", args.val_dataset)
+        print("Weights: ", args.weights)
+        print("Training Dataset: ", args.train_dataset)
+        print("Validation Dataset: ", args.val_dataset)
+
+    if args.command == "visualize":
+        assert args.val_dataset, "Argument --val_dataset is required for visualizations"
+        assert args.weights, "Weights are needed for the visualiations"
+        assert args.image, "An image is needed to perform the visualizations on"
+
+        print("Weights: ", args.weights)
+        print("Validation Dataset: ", args.val_dataset)
+        print("Image ID: ", args.image)
 
     # Configurations
     if args.command == "train":
         config = myMaskRCNNConfig()
     else:
-        class InferenceConfig(SurgeryConfig):
+        class InferenceConfig(Config):
             # Set batch size to 1 since we'll be running inference on
             # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
             NAME = "INFERENCE_config"
@@ -287,7 +298,6 @@ if __name__ == '__main__':
         weights_path = COCO_WEIGHTS_PATH
         # Download weights file
         if not os.path.exists(weights_path):
-            print("------------------------------------------------------------------")
             utils.download_trained_weights(weights_path)
     else:
         weights_path = args.weights
@@ -306,6 +316,8 @@ if __name__ == '__main__':
     # Train or evaluate
     if args.command == "train":
         train(model)
+    elif args.command == "visualize":
+        visualize_images(model)
     else:
         print("'{}' is not recognized. "
               "Use 'train' or 'splash'".format(args.command))

@@ -264,6 +264,3 @@ def train():
                 learning_rate = model.config.LEARNING_RATE,
                 epochs = 2,
                 layers = 'heads')
-
-# train()
-visualize_images()
